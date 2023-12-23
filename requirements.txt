@@ -4,7 +4,6 @@ python-multipart
 random
 os
 numpy
-pickle
 cv2
 cmake
 dlib

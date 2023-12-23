@@ -9,4 +9,3 @@ cmake
 dlib
 face_recognition
 pillow
-io

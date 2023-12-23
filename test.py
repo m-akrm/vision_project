@@ -1,19 +1,24 @@
 import cv2
 import face_recognition
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 import pickle
 import numpy as np
 import io
+import requests
 
 app = FastAPI()
 
+# URL of the EncodeFile.pkl on GitHub
+github_encode_file_url = "https://github.com/m-akrm/vision_project/blob/main/EncodeFile.pkl"
 # Load the trained data
-file = open('EncodeFile.pkl', 'rb')
-encodeKnown = pickle.load(file)
-file.close()
-trained_people, names = encodeKnown
-
+try:
+    response = requests.get(github_encode_file_url)
+    response.raise_for_status()
+    encodeKnown = pickle.loads(response.content)
+    trained_people, names = encodeKnown
+except requests.exceptions.RequestException as e:
+    raise HTTPException(status_code=500, detail=f"Failed to fetch EncodeFile.pkl from GitHub: {str(e)}")
 
 def recognize_faces(image):
     img = cv2.resize(image, (0, 0), fx=0.25, fy=0.25)
@@ -33,7 +38,6 @@ def recognize_faces(image):
 
     return result
 
-
 @app.post("/uploadfile/")
 async def create_upload_file(file: UploadFile = File(...)):
     contents = await file.read()
@@ -47,7 +51,6 @@ async def create_upload_file(file: UploadFile = File(...)):
         result_file.write(result_text)
 
     return FileResponse("result.txt")
-
 
 if __name__ == "__main__":
     import uvicorn
